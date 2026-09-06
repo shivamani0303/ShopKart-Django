@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Shop Products | ShopKart{% endblock %}
+
+{% block content %}
+
+{# ── Hero banner ──────────────────────────────────────────────────────────── #}
+<div class="shop-hero py-4">
+  <div class="container py-3">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-8">
+        <span class="eyebrow">SHOPKART COLLECTION</span>
+        <h1 class="display-6 fw-bold mt-2 mb-2">Find something you'll love.</h1>
+        <p class="text-white-50 mb-0">
+          Explore {{ total_count }} hand-picked products across electronics, fashion, home, beauty and more.
+        </p>
+      </div>
+      <div class="col-lg-4 text-lg-end">
+        <div class="catalog-stat">
+          <strong>{{ total_count }}</strong>
+          <span>products available</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── Main content ─────────────────────────────────────────────────────────── #}
+<div class="container py-5">
+  <div class="row g-4">
+
+    {# ── Sidebar ── #}
+    <aside class="col-lg-3">
+      <div class="filter-box sticky-lg-top" style="top:90px">
+
+        {# Category filter #}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Categories</h5>
+          <span class="filter-icon">☰</span>
+        </div>
+        <a class="category-link {% if not selected_category %}active{% endif %}"
+           href="{% url 'shop:product_list' %}{% if q %}?q={{ q }}{% endif %}">
+          <span>✨</span> All Products
+        </a>
+        {% for category in categories %}
+        <a class="category-link {% if selected_category == category.slug %}active{% endif %}"
+           href="?category={{ category.slug }}{% if q %}&q={{ q }}{% endif %}">
+          <span>›</span> {{ category.name }}
+          <span class="ms-auto cat-count">{{ category.products.count }}</span>
+        </a>
+        {% endfor %}
+
+        {# Sort options #}
+        <hr class="my-4">
+        <h5 class="fw-bold mb-3">Sort By</h5>
+        {% for val, label in sort_options %}
+        <a class="sort-link {% if sort == val %}active{% endif %}"
+           href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if q %}q={{ q }}&{% endif %}sort={{ val }}">
+          {{ label }}
+        </a>
+        {% endfor %}
+
+      </div>
+    </aside>
+
+    {# ── Product grid ── #}
+    <section class="col-lg-9">
+
+      {# Toolbar #}
+      <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <div>
+          <p class="eyebrow text-primary mb-1">CURATED FOR YOU</p>
+          <h2 class="fw-bold mb-0">
+            {% if q %}Search results{% elif selected_category %}{{ selected_category|title }}{% else %}All Products{% endif %}
+          </h2>
+          {% if q %}<p class="text-muted mb-0 mt-1">Showing results for "<strong>{{ q }}</strong>"</p>{% endif %}
+        </div>
+        <span class="result-count">
+          {{ total_count }} item{{ total_count|pluralize }}
+        </span>
+      </div>
+
+      {# Grid #}
+      <div class="row g-4">
+        {% for product in products %}
+        <div class="col-sm-6 col-xl-4">
+          {% include "shop/product_card.html" with product=product %}
+        </div>
+        {% empty %}
+        <div class="col-12">
+          <div class="empty-state">
+            <div class="empty-icon">🔎</div>
+            <h4>No products found</h4>
+            <p>Try another search or choose a different category.</p>
+            <a class="btn btn-primary" href="{% url 'shop:product_list' %}">View all products</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {# ── Pagination ── #}
+      {% if page_obj.paginator.num_pages > 1 %}
+      <nav class="mt-5 d-flex justify-content-center" aria-label="Product pages">
+        <ul class="pagination pagination-shopkart">
+
+          {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}page={{ page_obj.previous_page_number }}"
+               aria-label="Previous">‹</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">‹</span></li>
+          {% endif %}
+
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num == 1 or num == page_obj.paginator.num_pages or num|add:"-1" == page_obj.number or num|add:"1" == page_obj.number or num|add:"-2" == page_obj.number or num|add:"2" == page_obj.number %}
+            <li class="page-item">
+              <a class="page-link"
+                 href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}page={{ num }}">{{ num }}</a>
+            </li>
+            {% elif num == 2 and page_obj.number > 4 %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% elif num == page_obj.paginator.num_pages|add:"-1" and page_obj.number < page_obj.paginator.num_pages|add:"-3" %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+          {% endfor %}
+
+          {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?{% if selected_category %}category={{ selected_category }}&{% endif %}{% if q %}q={{ q }}&{% endif %}{% if sort %}sort={{ sort }}&{% endif %}page={{ page_obj.next_page_number }}"
+               aria-label="Next">›</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">›</span></li>
+          {% endif %}
+
+        </ul>
+      </nav>
+      <p class="text-center text-muted small mt-2">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </p>
+      {% endif %}
+
+    </section>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ order.order_number }} | ShopKart{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">{{ order.order_number }}</h2>
+            <div class="text-muted">{{ order.created_at|date:"d M Y, h:i A" }}</div>
+        </div>
+        <span class="badge text-bg-primary fs-6">{{ order.status }}</span>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">Items</h5>
+                    {% for item in order.items.all %}
+                    <div class="d-flex justify-content-between border-bottom py-3">
+                        <span>{{ item.product_name }} × {{ item.quantity }}</span>
+                        <strong>₹{{ item.subtotal }}</strong>
+                    </div>
+                    {% endfor %}
+                    <div class="d-flex justify-content-between fs-5 pt-3"><strong>Total</strong><strong>₹{{ order.total_amount }}</strong></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="summary-card">
+                <h5 class="fw-bold">Delivery</h5>
+                <p class="mb-1"><strong>{{ order.full_name }}</strong></p>
+                <p class="text-muted">{{ order.address }}, {{ order.city }}, {{ order.state }} - {{ order.pincode }}</p>
+                <hr>
+                <p class="mb-1">Payment: <strong>{{ order.get_payment_method_display }}</strong></p>
+                <p class="mb-0">Payment status:
+                  {% if order.payment_status == "PAID" %}
+                    <span class="badge text-bg-success">✔ PAID</span>
+                  {% elif order.payment_status == "COD_PENDING" %}
+                    <span class="badge text-bg-secondary">Cash on Delivery</span>
+                  {% else %}
+                    <span class="badge text-bg-warning text-dark">{{ order.payment_status }}</span>
+                  {% endif %}
+                </p>
+
+                {# ── Pay Now button — shown only for unpaid Razorpay orders ── #}
+                {% if order.payment_method == "RAZORPAY" and order.payment_status != "PAID" %}
+                <hr>
+                <a href="{% url 'shop:payment' order.id %}"
+                   class="btn btn-primary w-100 fw-bold mt-1">
+                  💳 Complete Payment
+                </a>
+                <p class="text-muted small mt-2 mb-0 text-center">
+                  Your order is reserved. Complete payment to confirm.
+                </p>
+                {% endif %}
+
+                {# ── Payment reference — shown after successful payment ── #}
+                {% if order.payment_status == "PAID" and order.payment_id %}
+                <hr>
+                <p class="small text-muted mb-0">
+                  Payment ID: <code>{{ order.payment_id }}</code>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

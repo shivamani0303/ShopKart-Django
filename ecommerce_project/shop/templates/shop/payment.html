@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Complete Payment | ShopKart{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+      <div class="auth-card text-center">
+
+        {# ── Header ── #}
+        <div class="mb-4">
+          <div style="font-size:2.8rem;">🔒</div>
+          <h2 class="fw-bold mt-2 mb-1">Secure Payment</h2>
+          <p class="text-muted mb-0">Order <strong>{{ order.order_number }}</strong></p>
+        </div>
+
+        {# ── Amount box ── #}
+        <div class="p-3 mb-4 rounded-3" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+          <div class="text-muted small fw-semibold mb-1">Total Payable</div>
+          <div style="font-size:2rem;font-weight:900;color:#166534;">₹{{ order.total_amount }}</div>
+        </div>
+
+        {% if payment_enabled %}
+
+          {# ── Error / status alert (hidden initially) ── #}
+          <div id="pay-alert" class="alert d-none mb-3" role="alert"></div>
+
+          {# ── Pay button ── #}
+          <button id="rzp-button"
+                  class="btn btn-primary btn-lg w-100 fw-bold"
+                  style="font-size:1.1rem;padding:14px;">
+            <span id="btn-text">Pay ₹{{ order.total_amount }} with Razorpay</span>
+            <span id="btn-spinner"
+                  class="spinner-border spinner-border-sm ms-2 d-none"
+                  role="status" aria-hidden="true"></span>
+          </button>
+
+          <p class="text-muted small mt-3">
+            🔐 Secured by Razorpay. UPI · Cards · Net Banking · Wallets accepted.
+          </p>
+
+          {# ── Hidden POST form — submitted by JS on payment success ── #}
+          <form id="rzp-success-form"
+                method="post"
+                action="{% url 'shop:payment_success' order.id %}"
+                class="d-none">
+            {% csrf_token %}
+            <input type="hidden" name="payment_id"        id="f-payment-id">
+            <input type="hidden" name="razorpay_order_id" id="f-order-id">
+            <input type="hidden" name="signature"         id="f-signature">
+          </form>
+
+          {# ── Razorpay Checkout JS ── #}
+          <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+          <script>
+          (function () {
+            "use strict";
+
+            const btn     = document.getElementById("rzp-button");
+            const spinner = document.getElementById("btn-spinner");
+            const btnText = document.getElementById("btn-text");
+            const alert   = document.getElementById("pay-alert");
+            const form    = document.getElementById("rzp-success-form");
+
+            function showAlert(msg, type) {
+              alert.textContent = msg;
+              alert.className   = "alert alert-" + type + " mb-3";
+            }
+
+            function setLoading(on) {
+              btn.disabled      = on;
+              spinner.classList.toggle("d-none", !on);
+              btnText.textContent = on ? "Opening payment…" : "Pay ₹{{ order.total_amount }} with Razorpay";
+            }
+
+            const options = {
+              key:         "{{ razorpay_key_id }}",
+              amount:      "{{ payment_amount_paise }}",
+              currency:    "INR",
+              name:        "ShopKart",
+              description: "Order {{ order.order_number }}",
+              order_id:    "{{ razorpay_order_id }}",
+              prefill: {
+                name:    "{{ order.full_name|escapejs }}",
+                email:   "{{ order.email|escapejs }}",
+                contact: "{{ order.phone|escapejs }}",
+              },
+              theme: { color: "#4f46e5" },
+
+              // ── Success ──────────────────────────────────────────────
+              handler: function (response) {
+                setLoading(true);
+                document.getElementById("f-payment-id").value = response.razorpay_payment_id;
+                document.getElementById("f-order-id").value   = response.razorpay_order_id;
+                document.getElementById("f-signature").value  = response.razorpay_signature;
+                form.submit();
+              },
+
+              // ── Modal closed / dismissed ─────────────────────────────
+              modal: {
+                ondismiss: function () {
+                  setLoading(false);
+                  showAlert(
+                    "Payment cancelled. You can try again whenever you're ready.",
+                    "warning"
+                  );
+                }
+              },
+            };
+
+            const rzp = new Razorpay(options);
+
+            // ── Payment failed event ─────────────────────────────────
+            rzp.on("payment.failed", function (resp) {
+              setLoading(false);
+              const reason = (resp.error && resp.error.description) || "Unknown error";
+              showAlert("Payment failed: " + reason + " — please try again.", "danger");
+              console.error("Razorpay payment.failed", resp.error);
+            });
+
+            btn.addEventListener("click", function (e) {
+              e.preventDefault();
+              showAlert("", "");        // clear previous alert
+              setLoading(true);
+              rzp.open();
+            });
+          }());
+          </script>
+
+        {% else %}
+          {# ── Razorpay not configured ── #}
+          <div class="alert alert-warning text-start">
+            <strong>Payment gateway unavailable.</strong><br>
+            Razorpay keys are not configured. Please add them to your
+            <code>.env</code> file and restart the server.
+          </div>
+          <a href="{% url 'shop:order_detail' order.id %}"
+             class="btn btn-outline-primary w-100">View Order Details</a>
+        {% endif %}
+
+        {# ── Footer links ── #}
+        <hr class="my-4">
+        <div class="d-flex justify-content-center gap-4 small">
+          <a href="{% url 'shop:cart' %}" class="text-muted text-decoration-none">← Back to Cart</a>
+          <a href="{% url 'shop:orders' %}" class="text-muted text-decoration-none">My Orders</a>
+        </div>
+
+      </div>
+    </div>
+
+    {# ── Order summary sidebar ── #}
+    <div class="col-md-5 col-lg-4 mt-4 mt-md-0">
+      <div class="filter-box">
+        <h6 class="fw-bold mb-3">Order Summary</h6>
+        {% for item in order.items.all %}
+        <div class="d-flex justify-content-between small mb-2">
+          <span>{{ item.product_name }}
+            <span class="text-muted">× {{ item.quantity }}</span>
+          </span>
+          <span class="fw-semibold">₹{{ item.subtotal }}</span>
+        </div>
+        {% endfor %}
+        <hr>
+        <div class="d-flex justify-content-between fw-bold">
+          <span>Total</span>
+          <span>₹{{ order.total_amount }}</span>
+        </div>
+
+        <hr class="mt-3">
+        <div class="small text-muted">
+          <div class="fw-semibold mb-1">Delivering to</div>
+          <div>{{ order.full_name }}</div>
+          <div>{{ order.address }}, {{ order.city }}</div>
+          <div>{{ order.state }} – {{ order.pincode }}</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

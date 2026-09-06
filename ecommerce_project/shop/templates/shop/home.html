@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}ShopKart | Home{% endblock %}
+
+{% block content %}
+
+{# ── Hero ──────────────────────────────────────────────────────────────────── #}
+<section class="hero-section py-5">
+  <div class="container">
+    <div class="row align-items-center py-4">
+      <div class="col-lg-7">
+        <span class="badge bg-light text-dark mb-3">NEW • ONLINE SHOPPING</span>
+        <h1 class="display-5 fw-bold">Everything you need, in one place.</h1>
+        <p class="lead mb-4">Discover 140+ quality products across 13 categories. Add to cart and checkout securely.</p>
+        <a href="{% url 'shop:product_list' %}" class="btn btn-light btn-lg">Shop Now →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container py-5">
+
+  {# ── Categories ───────────────────────────────────────────────────────────── #}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">Shop by Category</h2>
+    <a href="{% url 'shop:product_list' %}" class="text-primary fw-semibold">View all →</a>
+  </div>
+  <div class="row g-3 mb-5">
+    {% for category in categories %}
+    <div class="col-6 col-md-4 col-lg-3">
+      <a class="category-card h-100" href="{% url 'shop:product_list' %}?category={{ category.slug }}">
+        <div class="cat-icon mb-2">
+          {% if category.name == "Electronics" %}🔌
+          {% elif category.name == "Smartphones" %}📱
+          {% elif category.name == "Laptops" %}💻
+          {% elif category.name == "Headphones" %}🎧
+          {% elif category.name == "Watches" %}⌚
+          {% elif category.name == "Fashion" %}👕
+          {% elif category.name == "Shoes" %}👟
+          {% elif category.name == "Bags" %}👜
+          {% elif category.name == "Home" %}🏠
+          {% elif category.name == "Home & Kitchen" %}🍳
+          {% elif category.name == "Beauty" %}💄
+          {% elif category.name == "Sports" %}⚽
+          {% elif category.name == "Accessories" %}💍
+          {% else %}🛍️
+          {% endif %}
+        </div>
+        <h6 class="fw-bold mb-1">{{ category.name }}</h6>
+        <p class="small text-muted mb-0">{{ category.products.count }} products</p>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── Featured Products ─────────────────────────────────────────────────────── #}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">Featured Products</h2>
+    <a href="{% url 'shop:product_list' %}" class="text-primary fw-semibold">See all 140+ →</a>
+  </div>
+  <div class="row g-4">
+    {% for product in products %}
+    <div class="col-sm-6 col-lg-3">
+      {% include "shop/product_card.html" with product=product %}
+    </div>
+    {% empty %}
+    <p class="text-muted">No products yet. Run <code>python manage.py seed_data</code>.</p>
+    {% endfor %}
+  </div>
+
+</div>
+
+{% endblock %}

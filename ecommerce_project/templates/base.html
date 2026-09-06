@@ -1,0 +1,76 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}ShopKart{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark shop-nav sticky-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold brand-mark" href="{% url 'shop:home' %}"><span class="brand-icon">S</span> ShopKart</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'shop:product_list' %}">Products</a></li>
+                {% if user.is_authenticated %}
+                <li class="nav-item"><a class="nav-link" href="{% url 'shop:wishlist' %}">Wishlist</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'shop:orders' %}">My Orders</a></li>
+                {% endif %}
+            </ul>
+            <form class="d-flex me-3" action="{% url 'shop:product_list' %}" method="get">
+                <div class="nav-search"><span>⌕</span><input class="form-control form-control-sm" name="q" placeholder="Search products..." value="{{ request.GET.q }}"></div>
+            </form>
+            <a class="btn btn-outline-light me-2" href="{% url 'shop:cart' %}">Cart 🛒 <span class="badge bg-primary">{{ cart_count }}</span></a>
+            {% if user.is_authenticated %}
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown">{{ user.username }}</button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="{% url 'shop:profile' %}">Profile</a></li>
+                        {% if user.is_staff %}<li><a class="dropdown-item" href="/admin/">Admin</a></li>{% endif %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="post" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button class="dropdown-item" type="submit">Logout</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            {% else %}
+                <a class="btn btn-outline-light" href="{% url 'login' %}">Login</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<main>
+{% if messages %}
+<div class="container pt-3">
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+            {{ message }}
+            <button class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% block content %}{% endblock %}
+</main>
+
+<footer class="bg-dark text-light mt-5 py-4">
+    <div class="container text-center">
+        <div class="fw-bold">ShopKart</div>
+        <small>Internship E-Commerce Project • Django + MySQL</small>
+    </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

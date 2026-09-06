@@ -1,0 +1,41 @@
+<div class="card product-card h-100">
+    <div class="product-media position-relative">
+        {% if product.image %}
+            <img src="{{ product.image.url }}"
+                 class="product-image"
+                 alt="{{ product.name }}"
+                 loading="lazy"
+                 decoding="async">
+        {% else %}
+            <div class="product-placeholder">
+                <div class="text-center">
+                    <div style="font-size:2.5rem;opacity:.35;">📷</div>
+                    <div class="mt-1" style="font-size:.7rem;color:#94a3b8;font-weight:600;">No Image Available</div>
+                </div>
+            </div>
+        {% endif %}
+        <span class="product-category">{{ product.category.name }}</span>
+        {% if product.stock > 0 and product.stock <= 5 %}
+            <span class="stock-pill">Only {{ product.stock }} left</span>
+        {% endif %}
+    </div>
+    <div class="card-body d-flex flex-column p-3">
+        <h6 class="card-title fw-bold mb-1 product-name">{{ product.name }}</h6>
+        <p class="product-desc text-muted small mb-3">{{ product.description|truncatechars:68 }}</p>
+        <div class="mt-auto d-flex align-items-center justify-content-between gap-2">
+            <span class="product-price">₹{{ product.price }}</span>
+            <div class="d-flex gap-2">
+                <a href="{{ product.get_absolute_url }}" class="btn btn-view btn-sm">View</a>
+                {% if product.stock %}
+                <form method="post" action="{% url 'shop:cart_add' product.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button class="btn btn-cart btn-sm" title="Add to cart">+</button>
+                </form>
+                {% else %}
+                    <span class="badge text-bg-secondary align-self-center">Out of stock</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
