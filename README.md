@@ -108,3 +108,12 @@ ShopKart/
 │   └── requirements.txt
 │
 └── README.md
+---
+
+## 🚀 Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/shivamani0303/ShopKart-Django.git
+cd ShopKart-Django/ecommerce_project
